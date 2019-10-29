@@ -1,42 +1,42 @@
 #include "complex_lms_adaptive_fir_filter.h"
 
-struct AmLMSFIRState_64fc {
+struct LMSFIRState_64fc {
     int32_t tapsLen;
-    Am64fc *taps;
-    Am64fc *dly;
+    Cplx64 *taps;
+    Cplx64 *dly;
 };
 
-int AmLMSFIRGetStateSize_64fc(int32_t tapsLen, int32_t *size)
+int LMSFIRGetStateSize_64fc(int32_t tapsLen, int32_t *size)
 {
     if(!size || tapsLen <= 0) {
         return -1;
     }
 
-    *size = sizeof(Am64fc) * tapsLen * 2 + sizeof(int);
+    *size = sizeof(Cplx64) * tapsLen * 2 + sizeof(int);
     return 0;
 }
 
-int AmLMSFIRInit(AmLMSFIRState_64fc **state,
-                 Am64fc *taps,
+int LMSFIRInit(LMSFIRState_64fc **state,
+                 Cplx64 *taps,
                  int32_t tapsLen,
-                 Am64fc *dlyLine,
+                 Cplx64 *dlyLine,
                  uint8_t *buffer)
 {
     if(!state || tapsLen <= 0) {
         return -1;
     }
 
-    AmLMSFIRState_64fc *statePtr = (AmLMSFIRState_64fc*)buffer;
+    LMSFIRState_64fc *statePtr = (LMSFIRState_64fc*)buffer;
     *state = statePtr;
 
     // Initialize pointers
     statePtr->tapsLen = tapsLen;
-    statePtr->taps = (Am64fc*)buffer + sizeof(int);
-    statePtr->dly = statePtr->taps + sizeof(Am64fc) * tapsLen;
+    statePtr->taps = (Cplx64*)buffer + sizeof(int);
+    statePtr->dly = statePtr->taps + sizeof(Cplx64) * tapsLen;
 
     // Initialize taps
     if(taps) {
-        AmLMSFIRSetTaps_64fc(statePtr, taps);
+        LMSFIRSetTaps_64fc(statePtr, taps);
     } else {
         for(int i = 0; i < tapsLen; i++) {
             statePtr->taps[i].re = 0.0;
@@ -46,7 +46,7 @@ int AmLMSFIRInit(AmLMSFIRState_64fc **state,
 
     // Initialize delay line
     if(dlyLine) {
-        AmLMSFIRSetDlyLine_64fc(statePtr, dlyLine);
+        LMSFIRSetDlyLine_64fc(statePtr, dlyLine);
     } else {
         for(int i = 0; i < tapsLen; i++) {
             statePtr->dly[i].re = 0.0;
@@ -57,7 +57,7 @@ int AmLMSFIRInit(AmLMSFIRState_64fc **state,
     return 0;
 }
 
-int AmLMSFIRGetTapsLen_64fc(AmLMSFIRState_64fc *state, int32_t *tapsLen)
+int LMSFIRGetTapsLen_64fc(LMSFIRState_64fc *state, int32_t *tapsLen)
 {
     if(!state || !tapsLen) {
         return -1;
@@ -67,7 +67,7 @@ int AmLMSFIRGetTapsLen_64fc(AmLMSFIRState_64fc *state, int32_t *tapsLen)
     return 0;
 }
 
-int AmLMSFIRGetTaps_64fc(AmLMSFIRState_64fc *state, Am64fc *dst)
+int LMSFIRGetTaps_64fc(LMSFIRState_64fc *state, Cplx64 *dst)
 {
     if(!state || !dst) {
         return -1;
@@ -80,7 +80,7 @@ int AmLMSFIRGetTaps_64fc(AmLMSFIRState_64fc *state, Am64fc *dst)
     return 0;
 }
 
-int AmLMSFIRSetTaps_64fc(AmLMSFIRState_64fc *state, const Am64fc *src)
+int LMSFIRSetTaps_64fc(LMSFIRState_64fc *state, const Cplx64 *src)
 {
     if(!state || !src) {
         return -1;
@@ -93,7 +93,7 @@ int AmLMSFIRSetTaps_64fc(AmLMSFIRState_64fc *state, const Am64fc *src)
     return 0;
 }
 
-int AmLMSFIRGetDlyLine_64fc(AmLMSFIRState_64fc *state, Am64fc *dst)
+int LMSFIRGetDlyLine_64fc(LMSFIRState_64fc *state, Cplx64 *dst)
 {
     if(!state || !dst) {
         return -1;
@@ -106,7 +106,7 @@ int AmLMSFIRGetDlyLine_64fc(AmLMSFIRState_64fc *state, Am64fc *dst)
     return 0;
 }
 
-int AmLMSFIRSetDlyLine_64fc(AmLMSFIRState_64fc *state, const Am64fc *src)
+int LMSFIRSetDlyLine_64fc(LMSFIRState_64fc *state, const Cplx64 *src)
 {
     if(!state || !src) {
         return -1;
@@ -119,13 +119,13 @@ int AmLMSFIRSetDlyLine_64fc(AmLMSFIRState_64fc *state, const Am64fc *src)
     return 0;
 }
 
-int AmLMSFIR_64fc(AmLMSFIRState_64fc *state,
-                  const Am64fc *src,
-                  const Am64fc *ref,
-                  Am64fc *dst,
-                  int32_t len,
-                  double mu,
-                  Am64fc *e)
+int LMSFIR_64fc(LMSFIRState_64fc *state,
+                const Cplx64 *src,
+                const Cplx64 *ref,
+                Cplx64 *dst,
+                int32_t len,
+                double mu,
+                Cplx64 *e)
 {
     if(!state || !src || !ref || !dst || (len <= 0)) {
         return -1;
@@ -140,9 +140,9 @@ int AmLMSFIR_64fc(AmLMSFIRState_64fc *state,
         state->dly[state->tapsLen - 1] = src[i];
 
         // Complex filter
-        Am64fc y = { 0.0, 0.0 };
+        Cplx64 y = { 0.0, 0.0 };
         for(int j = 0; j < state->tapsLen; j++) {
-            Am64fc r = {
+            Cplx64 r = {
                 state->dly[j].re * state->taps[j].re - state->dly[j].im * state->taps[j].im,
                 state->dly[j].re * state->taps[j].im + state->dly[j].im * state->taps[j].re
             };
@@ -158,7 +158,7 @@ int AmLMSFIR_64fc(AmLMSFIRState_64fc *state,
         // x*[n] = complex conjugate of input
 
         // Calculate error term
-        Am64fc error = {
+        Cplx64 error = {
             ref[i].re - y.re,
             ref[i].im - y.im
         };
@@ -169,11 +169,11 @@ int AmLMSFIR_64fc(AmLMSFIRState_64fc *state,
         }
 
         for(int j = 0; j < state->tapsLen; j++) {
-            Am64fc xConj = {
+            Cplx64 xConj = {
                 state->dly[j].re,
                 -state->dly[j].im
             };
-            Am64fc r = {
+            Cplx64 r = {
                 error.re * xConj.re - error.im * xConj.im,
                 error.re * xConj.im + error.im * xConj.re
             };

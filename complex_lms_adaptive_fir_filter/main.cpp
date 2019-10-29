@@ -4,13 +4,7 @@
 
 int main()
 {
-    std::complex<double> f(1, 2);
-    double *p = (double*)&f;
-    double p1 = p[0];
-    double p2 = p[1];
-    auto f2 = conj(f);
-
-    AmLMSFIRState_64fc *state = NULL;
+    LMSFIRState_64fc *state = NULL;
     // Filter length
     const int FIRLEN = 5;
     // Input array length
@@ -19,15 +13,15 @@ int main()
     // Query the memory requirements for the state, allocate the memory,
     //   then initialize the state.
     int bufferSize = 0;
-    AmLMSFIRGetStateSize_64fc(FIRLEN, &bufferSize);
+    LMSFIRGetStateSize_64fc(FIRLEN, &bufferSize);
     std::vector<uint8_t> buffer(bufferSize);
-    AmLMSFIRInit(&state, NULL, FIRLEN, NULL, &buffer[0]);
+    LMSFIRInit(&state, NULL, FIRLEN, NULL, &buffer[0]);
 
     // Inputs/outputs
-    std::vector<Am64fc> input(N), ref(N), dst(N), e(N);
+    std::vector<Cplx64> input(N), ref(N), dst(N), e(N);
 
     // Reference filter
-    Am64fc w[FIRLEN] = {
+    Cplx64 w[FIRLEN] = {
         { 0.2, 0.0 },
         { 0.0, 0.4 },
         { 0.6, 0.0 },
@@ -43,11 +37,11 @@ int main()
 
     // Filter input and store as reference.
     for(int i = 0; i < N; i++) {
-        Am64fc sum = { 0.0, 0.0 };
+        Cplx64 sum = { 0.0, 0.0 };
         for(int j = 0; j < FIRLEN; j++) {
             int k = i - j;
             if(k >= 0) {
-                Am64fc c = {
+                Cplx64 c = {
                     input[k].re * w[j].re - input[k].im * w[j].im,
                     input[k].re * w[j].im + input[k].im * w[j].re
                 };
@@ -59,11 +53,11 @@ int main()
     }
 
     // Adapt step.
-    AmLMSFIR_64fc(state, &input[0], &ref[0], &dst[0], N, 1.0e-2, &e[0]);
+    LMSFIR_64fc(state, &input[0], &ref[0], &dst[0], N, 1.0e-2, &e[0]);
 
     // Request adapted filter taps, should match reference filter.
-    Am64fc wAdapted[FIRLEN];
-    AmLMSFIRGetTaps_64fc(state, wAdapted);
+    Cplx64 wAdapted[FIRLEN];
+    LMSFIRGetTaps_64fc(state, wAdapted);
 
     return 0;
 }
