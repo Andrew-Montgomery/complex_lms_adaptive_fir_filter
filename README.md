@@ -2,7 +2,7 @@
 * Complex LMS adaptive FIR filter reference implementation.
 * Industry standard and documented (inline) C API.
 * Example usage provided in main.cpp.
-* Tested in VS2012.
+* Compiled with VS2012 x64 compiler.
 * Real valued LMS adaptive FIR filter can be accomplished by setting all imaginary values to zero.
 
 **References**  
